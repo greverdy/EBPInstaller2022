@@ -41,6 +41,8 @@ import shutil
 
 from mega import Mega
 
+from threading import *
+
 
 #╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬#
 #╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬#
@@ -58,13 +60,13 @@ class EBP(customtkinter.CTk):
 
         super().__init__()
         
-        messagebox.showinfo('Information', 'Bonjour,\ncet exemplaire est une première version de l\'utilitaire d\'installation des logiciels EBP via une interface graphique. Merci de patienter pendant le téléchargement ET l\'installation (ceux-ci s\'executent normalement, mais figent l\'interface graphique) et ainsi ne pas "jouer" avec la fenêtre.\n\nMerci de votre compréhension.\n\nLe service informatique\ninformatique@ecoris.fr')
+        messagebox.showinfo('Information', 'Bonjour,\ncet exemplaire est une première version de l\'utilitaire d\'installation des logiciels EBP via une interface graphique. Quelques bugs peuvent survenir, et tous les détails d\'installation ne sont pas \'cachés\' (Ex: Une fenêtre noir peut s\'ouvrir durant l\'installation, merci de ne pas la fermer).\n\nMerci de votre compréhension.\n\nLe service informatique\ninformatique@ecoris.fr')
         
         customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
         customtkinter.set_default_color_theme("green")  # Themes: blue (default), dark-blue, green
         
         self.geometry("1000x500")
-        self.title("EBP Installer 2022 | V 1.4")
+        self.title("EBP 2022 | V "+version_package+'                                                                                                 informatique@ecoris.fr | ECORIS')
         self.configure(fg_color="lightgrey")
         self.resizable(False,False)
 
@@ -98,7 +100,7 @@ class EBP(customtkinter.CTk):
         frame.grid(row=0, column=0, padx=0, pady=0)
 
         combobox_var = customtkinter.StringVar(value="Menu")  # set initial value
-        combobox1 = customtkinter.CTkOptionMenu(master=frame, values=["M.A.J. EBP", "--------------------", "M.A.J. Windows"], command=EBP.optionmenu_1, variable=combobox_var, hover=True)
+        combobox1 = customtkinter.CTkOptionMenu(master=frame, values=["M.A.J. EBP", "----------------------------------------", "Signaler Comme Fiable", "----------------------------------------", "M.A.J. Windows"], command=EBP.optionmenu_1, variable=combobox_var, hover=True)
         combobox1.grid(row=0, column=0, padx=10, pady=10)
 
         combobox_var = customtkinter.StringVar(value="Info")  # set initial value
@@ -115,6 +117,8 @@ class EBP(customtkinter.CTk):
         combobox1.set("Menu") 
         if choice == "M.A.J. EBP":
             EBP.CheckVersion()
+        elif choice == "Signaler Comme Fiable":
+            EBP.ApprovePackage()
         elif choice == "M.A.J. Windows":
             EBP.CheckUpdate()
 
@@ -156,7 +160,7 @@ class EBP(customtkinter.CTk):
 
         y=0.56
         for elem in Event_Swtichcase:
-            globals()["switch_{}".format(Event_Swtichcase.index(elem)+1)] = customtkinter.CTkSwitch(master=self, text=elem[0], command=partial(EBP.switch_event, elem[0], elem[1], "switch_{}".format(Event_Swtichcase.index(elem)+1)), variable=customtkinter.StringVar(value=elem[2]), onvalue="Oui", offvalue="Non")
+            globals()["switch_{}".format(Event_Swtichcase.index(elem)+1)] = customtkinter.CTkSwitch(master=self, text=elem[0], command=partial(EBP.switch_event, elem[0], elem[1], "switch_{}".format(Event_Swtichcase.index(elem)+1)), variable=customtkinter.StringVar(value=elem[2]), onvalue="Oui", offvalue="Non", state=elem[3])
             if elem[2] =="Oui":
                  globals()["switch_{}".format(Event_Swtichcase.index(elem)+1)].select()
             globals()["switch_{}".format(Event_Swtichcase.index(elem)+1)].place(relx=0.5, rely=y, anchor="w")
@@ -310,9 +314,19 @@ class EBP(customtkinter.CTk):
         resultbox.yview(tk.END)
 
 
+    def waitprogressbar(resultbox):
+        var = customtkinter.IntVar()
+        app.after(10000, var.set, 1)
+        app.wait_variable(var)
+        try:
+            resultbox.yview(tk.END)
+        except:
+            pass
+
+
     def install(choice):
 
-        mega = Mega()
+        #mega = Mega()
 
         resultbox = customtkinter.CTkTextbox(app, width=800, height=200)
         resultbox.place(relx=0.5, rely=0.5, anchor=customtkinter.CENTER)
@@ -395,7 +409,16 @@ class EBP(customtkinter.CTk):
                     progressbar1.start()
                     try:
                         EBP.wait(resultbox)
-                        mega.download_url(elem[2],foldername+'/EBP2022/')
+
+                        #"DOWNLOAD"
+                        t2=Thread(target=EBP.MegaDownload,kwargs={"elem" : elem[2]})
+                        t2.start()
+
+                        while t2.is_alive():
+                            EBP.waitprogressbar(resultbox)
+
+                        #mega = Mega()
+                        #mega.download_url(elem,foldername+'/EBP2022/')
 
                         resultbox.configure(state="normal")
                         resultbox.insert(tk.END, f"        • Téléchargement de {elem[1]} : OK\n")
@@ -416,23 +439,15 @@ class EBP(customtkinter.CTk):
                         progressbar2.set(0.0)
                         progressbar2.start()
 
-                        if os.system(foldername+"/EBP2022/"+elem[1]+".exe /s NETWORK=FALSE PERSONALIZED=TRUE WEBCHECKED=FALSE > nul") == 0: #
-                            resultbox.configure(state="normal")
-                            resultbox.insert(tk.END, f"          • Installation de {elem[1]} : OK\n")
-                            resultbox.configure(state="disabled")
-                            progressbar2.destroy()
-                        else:
-                            resultbox.configure(state="normal")
-                            resultbox.insert(tk.END, f"            • Erreur ! L'installation de {elem[1]} a échoué !\n")
-                            resultbox.configure(state="disabled")
-                            Failed_List.append(elem)
-                            progressbar2.destroy()
-                            try:
-                                os.system(f"echo Erreur installation {foldername}\EBP2022\{elem[1]}.exe >> %userprofile%/Desktop/EBPInstaller_Rapport_Erreurs.txt")
-                            except:
-                                pass
+                        t2=Thread(target=EBP.InstallProduct_dl,kwargs={"elem" : elem[1],"resultbox" : resultbox, "progressbar2" : progressbar2})
+                        t2.start()
+                        #InstallProduct_dl(elem,resultbox,progressbar2)
+
+                        while t2.is_alive():
+                            EBP.waitprogressbar(resultbox)
+
                     except WindowsError as a:
-                        if os.path.isfile(os.environ['TEMP']+'/EBP2022/'+elem[1]+'.exe'):
+                        if os.path.isfile(foldername+'/EBP2022/'+elem[1]+'.exe'):
 
                             resultbox.configure(state="normal")
                             resultbox.insert(tk.END, f"        • Téléchargement de {elem[1]} : OK\n")
@@ -448,21 +463,12 @@ class EBP(customtkinter.CTk):
 
                             EBP.wait(resultbox)
 
-                            if os.system(foldername+"/EBP2022/"+elem[1]+".exe /s NETWORK=FALSE PERSONALIZED=TRUE WEBCHECKED=FALSE > nul") == 0: #
-                                resultbox.configure(state="normal")
-                                resultbox.insert(tk.END, f"            • Installation de {elem[1]} : OK\n")
-                                resultbox.configure(state="disabled")
-                                progressbar2.destroy()
-                            else:
-                                resultbox.configure(state="normal")
-                                resultbox.insert(tk.END, f"            • Erreur ! L'installation de {elem[1]} a échoué !\n")
-                                resultbox.configure(state="disabled")
-                                Failed_List.append(elem)
-                                progressbar2.destroy()
-                                try:
-                                    os.system(f"echo WindowsError - Erreur installation {foldername}\EBP2022\{elem[1]}.exe >> %userprofile%/Desktop/EBPInstaller_Rapport_Erreurs.txt")
-                                except:
-                                    pass
+                            t2=Thread(target=EBP.InstallProduct_dl,kwargs={"elem" : elem[1],"resultbox" : resultbox, "progressbar2" : progressbar2})
+                            t2.start()
+                            #InstallProduct_dl(elem,resultbox,progressbar2)
+
+                            while t2.is_alive():
+                                EBP.waitprogressbar(resultbox)
                         else:
                             resultbox.configure(state="normal")
                             resultbox.insert(tk.END, f"            • [WindowsError] - Fichier introuvable ! Merci de contacter informatique@ecoris.fr, avec l\'aide du fichier \'EBPInstaller_Rapport_Erreurs.txt\' généré sur votre Bureau (ou sur la session administrateur), pour signaler cette erreur !\n")
@@ -503,31 +509,80 @@ class EBP(customtkinter.CTk):
 
                     EBP.wait(resultbox)
 
-                    if os.system(foldername+"/EBP2022/"+elem[1]+".exe /s NETWORK=FALSE PERSONALIZED=TRUE WEBCHECKED=FALSE > nul") == 0: #
-                        resultbox.configure(state="normal")
-                        resultbox.insert(tk.END, f"            • Installation de {elem[1]} : OK\n")
-                        resultbox.configure(state="disabled")
-                        progressbar2.destroy()
-                    else:
-                        resultbox.configure(state="normal")
-                        resultbox.insert(tk.END, f"            • Erreur ! L'installation de {elem[1]} a échoué !\n")
-                        resultbox.configure(state="disabled")
-                        Failed_List.append(elem)
-                        progressbar2.destroy()
-                        try:
-                            os.system(f"echo Erreur installation {foldername}\EBP2022\{elem[1]}.exe >> %userprofile%/Desktop/EBPInstaller_Rapport_Erreurs.txt")
-                        except:
-                            pass
+                    
+                    t2=Thread(target=EBP.InstallProduct_dl,kwargs={"elem" : elem[1],"resultbox" : resultbox, "progressbar2" : progressbar2})
+                    t2.start()
+                    #InstallProduct_dl(elem,resultbox,progressbar2)
+
+                    while t2.is_alive():
+                        EBP.waitprogressbar(resultbox)
+
             else:
                 resultbox.configure(state="normal")
                 resultbox.insert(tk.END, f"     • {elem[1]} est déjà installé [Dossier d'installation présent]\n")
                 resultbox.configure(state="disabled")
                 Failed_List.append(elem)
 
-
             EBP.wait(resultbox)
 
-            EBP.licenseXML(choice,Failed_List,resultbox)
+        EBP.wait(resultbox)
+        EBP.licenseXML(choice,Failed_List,resultbox)
+
+    
+    def MegaDownload(elem):
+        mega = Mega()
+        mega.download_url(elem,foldername+'/EBP2022/')
+    
+    def InstallProduct(elem,resultbox,progressbar2):
+        if os.system(foldername+"/EBP2022/"+elem+".exe /s NETWORK=FALSE PERSONALIZED=TRUE WEBCHECKED=FALSE > nul") == 0: #
+            resultbox.configure(state="normal")
+            resultbox.insert(tk.END, f"            • Installation de {elem} : OK\n")
+            resultbox.configure(state="disabled")
+            progressbar2.destroy()
+        else:
+            resultbox.configure(state="normal")
+            resultbox.insert(tk.END, f"            • Erreur ! L'installation de {elem} a échoué !\n")
+            resultbox.configure(state="disabled")
+            Failed_List.append(elem)
+            progressbar2.destroy()
+            try:
+                os.system(f"echo Erreur installation {foldername}\EBP2022\{elem}.exe >> %userprofile%/Desktop/EBPInstaller_Rapport_Erreurs.txt")
+            except:
+                pass
+
+    def InstallProduct_WindowsError(elem,resultbox,progressbar2):
+        if os.system(foldername+"/EBP2022/"+elem+".exe /s NETWORK=FALSE PERSONALIZED=TRUE WEBCHECKED=FALSE > nul") == 0: #
+            resultbox.configure(state="normal")
+            resultbox.insert(tk.END, f"            • Installation de {elem} : OK\n")
+            resultbox.configure(state="disabled")
+            progressbar2.destroy()
+        else:
+            resultbox.configure(state="normal")
+            resultbox.insert(tk.END, f"            • Erreur ! L'installation de {elem} a échoué !\n")
+            resultbox.configure(state="disabled")
+            Failed_List.append(elem)
+            progressbar2.destroy()
+            try:
+                os.system(f"echo WindowsError - Erreur installation {foldername}\EBP2022\{elem}.exe >> %userprofile%/Desktop/EBPInstaller_Rapport_Erreurs.txt")
+            except:
+                pass
+
+    def InstallProduct_dl(elem,resultbox,progressbar2):
+        if os.system(foldername+"/EBP2022/"+elem+".exe /s NETWORK=FALSE PERSONALIZED=TRUE WEBCHECKED=FALSE > nul") == 0: #
+            resultbox.configure(state="normal")
+            resultbox.insert(tk.END, f"            • Installation de {elem} : OK\n")
+            resultbox.configure(state="disabled")
+            progressbar2.destroy()
+        else:
+            resultbox.configure(state="normal")
+            resultbox.insert(tk.END, f"            • Erreur ! L'installation de {elem} a échoué !\n")
+            resultbox.configure(state="disabled")
+            Failed_List.append(elem)
+            progressbar2.destroy()
+            try:
+                os.system(f"echo [Already_DL] - Erreur installation - {foldername}\EBP2022\{elem}.exe >> %userprofile%/Desktop/EBPInstaller_Rapport_Erreurs.txt")
+            except:
+                pass
 
 
     def licenseXML(list,error,resultbox):
@@ -709,7 +764,7 @@ class EBP(customtkinter.CTk):
 
 
     def CheckVersion():
-        request = requests.get('https://github.com/greverdy/EBPInstaller2022/blob/main/v.1.4.md')
+        request = requests.get('https://github.com/greverdy/EBPInstaller2022/blob/main/v.'+version_package+'.md')
         if request.status_code == 200:
             messagebox.showinfo('CheckVersion', 'Utilitaire à jour !')
         else:
@@ -723,8 +778,18 @@ class EBP(customtkinter.CTk):
                     pass
 
 
-    def CheckUpdate():
+
+    def CheckUpdateCommand():
+        global resultmaj
         resultmaj = os.popen('powershell -command "$session = New-Object -com "Microsoft.Update.Session"; "$searcher = $session.CreateUpdateSearcher()"; "$results = $searcher.search(\'IsInstalled=0\')"; " $results.updates.count"').read()
+
+
+    def CheckUpdate():
+        checkmaj=Thread(target=EBP.CheckUpdateCommand)
+        checkmaj.start()
+        messagebox.showinfo('CheckUpdate', 'Merci d\'attendre le temps que le programme calcul la présence de mise à jour !')
+        while checkmaj.is_alive():
+            EBP.waitprogressbar("check")
         if resultmaj.strip() == "0" :
             messagebox.showinfo('CheckUpdate', 'Aucune mise à jour en attentes !')
         else:
@@ -736,8 +801,20 @@ class EBP(customtkinter.CTk):
                     pass
 
 
+    def ApprovePackage():
+        check_y_n = messagebox.askyesno('ApprovePackage', 'Souhaitez-vous approuver ce package ?')
+        if check_y_n :
+            try:
+                os.system('start msedge "https://feedback.smartscreen.microsoft.com/feedback.aspx?v=6&t=16&result=block&type=download&dr=1&osVer=10.0.19045.2006.vb_release&prodGuid=381ddd1e-e600-42de-94ed-8c34bf73f16d&locale=fr-FR&fv=1.2.2211.6&url=aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2dyZXZlcmR5L0VCUEluc3RhbGxlcjIwMjIvbWFpbi9FQlAyMDIyLmV4ZQ%3D%3D&refUrl=aHR0cHM6Ly9zb2Z0LmVjb3Jpcy5mci8%3D&fn=RUJQMjAyMiAoMSkuZXhl&fh=e36e2673cc7b47fa52fa9d440359eb0bf2f7eea190d688f36e7772685d3e68d1&vs=0&sn=RUNPUklT&sh=d2684002447fdf0b45ab03081be69c45319c3830&in=RUNPUklT&ih=0000000000000000000000000000000000000000&corrId=B29A3CC7-7B57-4EEC-9769-78BB799C02A6"')
+            except:
+                os.system('start firefox "https://feedback.smartscreen.microsoft.com/feedback.aspx?v=6&t=16&result=block&type=download&dr=1&osVer=10.0.19045.2006.vb_release&prodGuid=381ddd1e-e600-42de-94ed-8c34bf73f16d&locale=fr-FR&fv=1.2.2211.6&url=aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2dyZXZlcmR5L0VCUEluc3RhbGxlcjIwMjIvbWFpbi9FQlAyMDIyLmV4ZQ%3D%3D&refUrl=aHR0cHM6Ly9zb2Z0LmVjb3Jpcy5mci8%3D&fn=RUJQMjAyMiAoMSkuZXhl&fh=e36e2673cc7b47fa52fa9d440359eb0bf2f7eea190d688f36e7772685d3e68d1&vs=0&sn=RUNPUklT&sh=d2684002447fdf0b45ab03081be69c45319c3830&in=RUNPUklT&ih=0000000000000000000000000000000000000000&corrId=B29A3CC7-7B57-4EEC-9769-78BB799C02A6"')
+            else:
+                pass
+    #
+
+
     def display_version():
-        messagebox.showinfo('display_version', '-----------------------------------\n          Version 1.4\n        Version GUI 1.0\n-----------------------------------')
+        messagebox.showinfo('display_version', '-----------------------------------\n          Version : '+version_package+'\n        Version GUI 1.0\n-----------------------------------')
 
 
     def display_help():
@@ -774,11 +851,13 @@ EBP_List_Select = []
 Failed_List=[]
 
 Event_Swtichcase=[
-["Supprimer les packages après l'installation : Non","delete_EBP_packages","Non"],
-["Redémarrer après l'installation : Non","restart","Non"],
-["Chemin par défault : %LOCALAPPDATA%", "Change_path","Oui"],
-["Générer le rapport d'erreur : Oui", "log","Oui"]
+["Supprimer les packages après l'installation : Non","delete_EBP_packages","Non","normal"],
+["Redémarrer après l'installation : Non","restart","Non","normal"],
+["Chemin par défault : %LOCALAPPDATA%", "Change_path","Oui","normal"]
 ]
+#["Générer le rapport d'erreur : Oui", "log","Oui","disabled"]
+
+version_package="1.4.1"
 
 #╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬#
 #╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬#
@@ -811,6 +890,7 @@ if __name__ == "__main__":
         exit()
     else:
         os._exit(0)
+    
 
 #╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬#
 #╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬#
